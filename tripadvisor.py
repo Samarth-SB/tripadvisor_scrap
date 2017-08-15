@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup as BS
 import json
 import numpy as np
 import pandas as pd
-
+from pymongo import MongoClient
 
 # In[2]:
 
@@ -132,7 +132,7 @@ df.columns = ['Name','Rating','Date','Title','Body','Recommended Title','Recomme
 
 # In[10]:
 
-df
+print(df)
 
 
 # In[11]:
@@ -225,4 +225,32 @@ df2.columns = ['Age Gender','Hometown','Travel Style','Point','Level']
 # In[16]:
 
 print(df2)
+
+
+# Save to mongodb
+
+# db host
+client = MongoClient("localhost", 27017)
+
+# db name
+db = client.tripadvisor
+
+# collection name
+collection = db.jwmarriot
+
+# reset jwmarriot collection
+collection.remove({})
+
+num = len(names)
+for i in range(num):
+    document = {'Name':names[i].strip(),
+                'Rating':ratings[i]}
+    collection.insert(document)
+
+print("number of documents inserted :", collection.count())
+
+for x in collection.find():
+    print(x['Name'])
+
+client.close()
 
