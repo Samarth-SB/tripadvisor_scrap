@@ -1,0 +1,228 @@
+
+# coding: utf-8
+
+# In[1]:
+
+import re
+import requests
+from bs4 import BeautifulSoup as BS
+import json
+import numpy as np
+import pandas as pd
+
+
+# In[2]:
+
+userReviewURL = []
+memberOverlayLink = []
+memberProfileURL = []
+
+
+# In[3]:
+    
+#input url
+url = 'https://www.tripadvisor.com.sg/ShowUserReviews-g294217-d300697-r512026251-JW_Marriott_Hotel_Hong_Kong-Hong_Kong.html#REVIEWS'
+
+#input page counter
+counter = 1
+
+
+# In[4]:
+
+userReviewURL.append(url)
+
+
+# In[5]:
+
+for i in range(counter-1):
+    html = requests.get(userReviewURL[i])
+    soup = BS(html.content,'html.parser')
+    container = soup.find('a',{'data-page-number':i+2})
+    urlTemp = 'https://www.tripadvisor.com.sg' + container['href']
+    userReviewURL.append(urlTemp)
+
+
+# In[6]:
+
+names = []
+ratings = []
+dates = []
+titles = []
+bodies = []
+recommendTitles = []
+recommendAnswers = []
+uids = []
+
+
+# In[7]:
+
+for i in range(len(userReviewURL)):
+    html = requests.get(userReviewURL[i])
+    soup = BS(html.content,'html.parser')
+    container = soup.find('div',{'id':'SHOW_USER_REVIEW'})
+
+    for j in range(5):
+        temp = container.findAll('div',{'id':re.compile('^review_')})[j]
+        name = temp.find('span',{'class':re.compile('^expand_inline')})
+        rating = temp.find('span',{'class':re.compile('^ui_bubble_rating')})['class'][1]
+        date = temp.find('span',{'class':'ratingDate relativeDate'})['title']
+        if j == 0:
+            title = temp.find('div',{'property':'name'})
+            body = temp.find('p',{'property':'reviewBody'})
+        else:
+            title = temp.find('span',{'class':'noQuotes'})
+            body = temp.find('p',{'id':re.compile('^review_')})
+        recommendTitle = temp.find('span',{'class':'recommend-titleInline'})
+        recommendAnswer = temp.findAll('li',{'class':'recommend-answer'})
+        uid = str(temp.find('div',{'id':re.compile('^UID_')})['id'])
+    
+        if len(name) > 0:
+            names.append(name.text)
+        else:
+            names.append('')
+        if len(rating) > 0:
+            ratings.append(rating[7])
+        else:
+            ratings.append('')
+        if len(date) > 0:
+            dates.append(date)
+        else:
+            dates.append('')
+        if len(title) > 0:
+            titles.append(title.text)
+        else:
+            titles.append('')
+        if len(body) > 0:
+            bodies.append(body.text.strip('\n'))
+        else:
+            bodies.append('')
+        if len(recommendTitle) > 0:
+            recommendTitles.append(recommendTitle.text)
+        else:
+            recommendTitles.append('')
+        if len(recommendAnswer) > 0:
+            jsonTemp = {}
+            for k in range(len(recommendAnswer)):
+                jsonTemp[recommendAnswer[k].text.strip('\n')] = recommendAnswer[k].find('span')['alt'][0]
+            recommendAnswers.append(json.dumps(jsonTemp))
+        else:
+            recommendAnswers.append('')
+        if len(uid) > 0:
+            uids.append(uid[4:uid.find('-SRC')])
+        else:
+            uids.append('')
+
+
+# In[8]:
+
+namesDF = pd.DataFrame(np.array(names))
+ratingsDF = pd.DataFrame(np.array(ratings))
+datesDF = pd.DataFrame(np.array(dates))
+titlesDF = pd.DataFrame(np.array(titles))
+bodiesDF = pd.DataFrame(np.array(bodies))
+recommendTitlesDF = pd.DataFrame(np.array(recommendTitles))
+recommendAnswersDF = pd.DataFrame(np.array(recommendAnswers))
+
+
+# In[9]:
+
+df = pd.concat([namesDF,ratingsDF,datesDF,titlesDF,bodiesDF,recommendTitlesDF,recommendAnswersDF], axis=1)
+df.columns = ['Name','Rating','Date','Title','Body','Recommended Title','Recommended Answer']
+
+
+# In[10]:
+
+df
+
+
+# In[11]:
+
+for i in range(len(uids)):
+    if len(uids[i]) > 0:
+        memberOverlayLink.append('https://www.tripadvisor.com.sg/MemberOverlay?Mode=owa&uid=' + str(uids[i]))
+        memberProfileURL.append('https://www.tripadvisor.com.sg/MemberProfile-a_uid.' + str(uids[i]))
+    else:
+        memberOverlayLink.append('')
+        memberProfileURL.append('')
+
+
+# In[12]:
+
+ageGenders = []
+hometowns = []
+travelStyleTags = []
+points = []
+levels = []
+
+
+# In[13]:
+
+for i in range(len(memberProfileURL)):
+    html = requests.get(memberProfileURL[i])
+    soup = BS(html.content,'html.parser')
+    container = soup.find('div',{'id':'MODULES_MEMBER_CENTER'})
+
+    ageGender = container.find('div',{'class':'ageSince'})
+    hometown = container.find('div',{'class':'hometown'})
+    travelStyleTag = container.findAll('div',{'class':'tagBubble unclickable'})
+    point = container.find('div',{'class':'points'})
+    level = container.find('div',{'class':'level tripcollectiveinfo'})
+
+    if len(ageGender) > 0:
+        ageGenders.append(ageGender.text[14:].strip())
+    else:
+        ageGenders.append('')
+    if len(hometown) > 0:
+        hometowns.append(hometown.text)
+    else:
+        hometowns.append('')
+    if len(travelStyleTag) > 0:
+        listTemp = []
+        for j in range(len(travelStyleTag)):
+            listTemp.append(travelStyleTag[j].text.strip())
+        travelStyleTags.append(listTemp)
+    else:
+        travelStyleTags.append('')
+    if len(point) > 0:
+        points.append(int(str(point.text.strip()).replace(',','')))
+    else:
+        points.append('')
+    if level is not None:
+        levels.append(level.text[6:level.text.find(' ',6)].strip())
+    else:
+        levels.append('')
+
+
+# In[14]:
+if(ageGenders is not None):
+    ageGendersDF = pd.DataFrame(np.array(ageGenders))
+else:
+    ageGendersDF = ""
+if(hometowns is not None):
+    hometownsDF = pd.DataFrame(np.array(hometowns))
+else:
+    hometownsDF = ""
+if(travelStyleTags is not None):
+    travelStyleTagsDF = pd.DataFrame(travelStyleTags)
+else:
+    travelStyleTagsDF = ""
+if(points is not None):
+    pointsDF = pd.DataFrame(np.array(points))
+else:
+    pointsDF = ""
+if(levels is not None):
+    levelsDF = pd.DataFrame(np.array(levels))
+else:
+    levelsDF = ""
+
+
+# In[15]:
+
+df2 = pd.concat([ageGendersDF,hometownsDF,travelStyleTagsDF,pointsDF,levelsDF], axis=1)
+df2.columns = ['Age Gender','Hometown','Travel Style','Point','Level']
+
+
+# In[16]:
+
+print(df2)
+
