@@ -10,6 +10,8 @@ import json
 import numpy as np
 import pandas as pd
 from pymongo import MongoClient
+import csv
+import os.path
 
 # In[2]:
 
@@ -21,10 +23,11 @@ memberProfileURL = []
 # In[3]:
     
 #input url
-url = 'https://www.tripadvisor.com.sg/ShowUserReviews-g294217-d300697-r512026251-JW_Marriott_Hotel_Hong_Kong-Hong_Kong.html#REVIEWS'
+#url = 'https://www.tripadvisor.com.sg/ShowUserReviews-g294217-d300697-r512026251-JW_Marriott_Hotel_Hong_Kong-Hong_Kong.html#REVIEWS'
+url = 'https://www.tripadvisor.com.sg/ShowUserReviews-g294217-d300697-r512988117-JW_Marriott_Hotel_Hong_Kong-Hong_Kong.html#REVIEWS'
 
 #input page counter
-counter = 1
+counter = 313
 
 
 # In[4]:
@@ -33,14 +36,27 @@ userReviewURL.append(url)
 
 
 # In[5]:
-
-for i in range(counter-1):
-    html = requests.get(userReviewURL[i])
-    soup = BS(html.content,'html.parser')
-    container = soup.find('a',{'data-page-number':i+2})
-    urlTemp = 'https://www.tripadvisor.com.sg' + container['href']
-    userReviewURL.append(urlTemp)
-
+if not os.path.isfile("jwmarriot_review_urls.csv"):
+    f = open('jwmarriot_review_urls.csv','w')
+    for i in range(counter-1):
+        print('Load URLs from web')
+        html = requests.get(userReviewURL[i])
+        soup = BS(html.content,'html.parser')
+        container = soup.find('a',{'data-page-number':i+2})
+        urlTemp = 'https://www.tripadvisor.com.sg' + container['href']
+        userReviewURL.append(urlTemp)
+        print(str(i) + ':' + urlTemp)
+        f.write(urlTemp + '\r')
+else:
+    with open('jwmarriot_review_urls.csv','rU') as f:
+        line = csv.reader(f)
+        i = 0
+        for row in line:
+            print('Load URLs from file')
+            print(str(i) + ':' + row[0])
+            userReviewURL.append(row[0])
+            i = i + 1
+f.close()
 
 # In[6]:
 
@@ -59,13 +75,16 @@ uids = []
 for i in range(len(userReviewURL)):
     html = requests.get(userReviewURL[i])
     soup = BS(html.content,'html.parser')
-    container = soup.find('div',{'id':'SHOW_USER_REVIEW'})
+    #container = soup.find('div',{'id':'SHOW_USER_REVIEW'})
+    container = soup.find('div',{'id':'BODYCON'})
+    print('Parsing url : ' + userReviewURL[i])
 
     for j in range(5):
         temp = container.findAll('div',{'id':re.compile('^review_')})[j]
         name = temp.find('span',{'class':re.compile('^expand_inline')})
         rating = temp.find('span',{'class':re.compile('^ui_bubble_rating')})['class'][1]
-        date = temp.find('span',{'class':'ratingDate relativeDate'})['title']
+        date = temp.find('span',{'class':'ratingDate'}).next_element
+            
         if j == 0:
             title = temp.find('div',{'property':'name'})
             body = temp.find('p',{'property':'reviewBody'})
