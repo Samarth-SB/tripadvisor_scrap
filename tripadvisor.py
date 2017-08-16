@@ -101,38 +101,38 @@ for i in range(len(userReviewURL)):
         else:
             uid = ""
     
-        if len(name) > 0:
+        if name is not None and len(name) > 0:
             names.append(name.text)
         else:
             names.append('')
-        if len(rating) > 0:
+        if rating is not None and len(rating) > 0:
             ratings.append(rating[7])
         else:
             ratings.append('')
-        if len(date) > 0:
+        if date is not None and len(date) > 0:
             dates.append(date)
         else:
             dates.append('')
-        if len(title) > 0:
+        if title is not None and len(title) > 0:
             titles.append(title.text)
         else:
             titles.append('')
-        if len(body) > 0:
+        if body is not None and len(body) > 0:
             bodies.append(body.text.strip('\n'))
         else:
             bodies.append('')
-        if len(recommendTitle) > 0:
+        if recommendTitle is not None and len(recommendTitle) > 0:
             recommendTitles.append(recommendTitle.text)
         else:
             recommendTitles.append('')
-        if len(recommendAnswer) > 0:
+        if recommendAnswer is not None and len(recommendAnswer) > 0:
             jsonTemp = {}
             for k in range(len(recommendAnswer)):
                 jsonTemp[recommendAnswer[k].text.strip('\n')] = recommendAnswer[k].find('span')['alt'][0]
             recommendAnswers.append(json.dumps(jsonTemp))
         else:
             recommendAnswers.append('')
-        if len(uid) > 0:
+        if uid is not None and len(uid) > 0:
             uids.append(uid[4:uid.find('-SRC')])
         else:
             uids.append('')
