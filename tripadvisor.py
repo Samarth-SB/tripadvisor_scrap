@@ -230,7 +230,8 @@ print(df2)
 # Save to mongodb
 
 # db host
-client = MongoClient("localhost", 27017)
+#client = MongoClient("localhost", 27017)
+client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
 
 # db name
 db = client.tripadvisor
