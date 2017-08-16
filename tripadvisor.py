@@ -75,8 +75,7 @@ uids = []
 for i in range(len(userReviewURL)):
     html = requests.get(userReviewURL[i])
     soup = BS(html.content,'html.parser')
-    #container = soup.find('div',{'id':'SHOW_USER_REVIEW'})
-    container = soup.find('div',{'id':'BODYCON'})
+    container = soup.find('div',{'id':'SHOW_USER_REVIEW'})    
     print('Parsing url : ' + userReviewURL[i])
 
     for j in range(5):
@@ -93,7 +92,14 @@ for i in range(len(userReviewURL)):
             body = temp.find('p',{'id':re.compile('^review_')})
         recommendTitle = temp.find('span',{'class':'recommend-titleInline'})
         recommendAnswer = temp.findAll('li',{'class':'recommend-answer'})
-        uid = str(temp.find('div',{'id':re.compile('^UID_')})['id'])
+        memberInfo = temp.find('div',{'class':'member_info'})
+        print(memberInfo)
+        memberOverlayLink = memberInfo.find('div',{'class':'memberOverlayLink'})
+        if(memberOverlayLink is not None):
+            uid = memberOverlayLink['id']
+            print('uid : ' + uid)
+        else:
+            uid = ""
     
         if len(name) > 0:
             names.append(name.text)
