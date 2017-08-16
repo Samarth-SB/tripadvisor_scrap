@@ -157,6 +157,7 @@ df.columns = ['Name','Rating','Date','Title','Body','Recommended Title','Recomme
 
 # In[10]:
 
+df
 print(df)
 
 
@@ -183,39 +184,40 @@ levels = []
 # In[13]:
 
 for i in range(len(memberProfileURL)):
-    html = requests.get(memberProfileURL[i])
-    soup = BS(html.content,'html.parser')
-    container = soup.find('div',{'id':'MODULES_MEMBER_CENTER'})
+    if(memberProfileURL[i] is not None and len(memberProfileURL[i]) > 0):
+        html = requests.get(memberProfileURL[i])
+        soup = BS(html.content,'html.parser')
+        container = soup.find('div',{'id':'MODULES_MEMBER_CENTER'})
+        if(container is not None):
+            ageGender = container.find('div',{'class':'ageSince'})
+            hometown = container.find('div',{'class':'hometown'})
+            travelStyleTag = container.findAll('div',{'class':'tagBubble unclickable'})
+            point = container.find('div',{'class':'points'})
+            level = container.find('div',{'class':'level tripcollectiveinfo'})
 
-    ageGender = container.find('div',{'class':'ageSince'})
-    hometown = container.find('div',{'class':'hometown'})
-    travelStyleTag = container.findAll('div',{'class':'tagBubble unclickable'})
-    point = container.find('div',{'class':'points'})
-    level = container.find('div',{'class':'level tripcollectiveinfo'})
-
-    if len(ageGender) > 0:
-        ageGenders.append(ageGender.text[14:].strip())
-    else:
-        ageGenders.append('')
-    if len(hometown) > 0:
-        hometowns.append(hometown.text)
-    else:
-        hometowns.append('')
-    if len(travelStyleTag) > 0:
-        listTemp = []
-        for j in range(len(travelStyleTag)):
-            listTemp.append(travelStyleTag[j].text.strip())
-        travelStyleTags.append(listTemp)
-    else:
-        travelStyleTags.append('')
-    if len(point) > 0:
-        points.append(int(str(point.text.strip()).replace(',','')))
-    else:
-        points.append('')
-    if level is not None:
-        levels.append(level.text[6:level.text.find(' ',6)].strip())
-    else:
-        levels.append('')
+            if len(ageGender) > 0:
+                ageGenders.append(ageGender.text[14:].strip())
+            else:
+                ageGenders.append('')
+            if len(hometown) > 0:
+                hometowns.append(hometown.text)
+            else:
+                hometowns.append('')
+            if len(travelStyleTag) > 0:
+                listTemp = []
+                for j in range(len(travelStyleTag)):
+                    listTemp.append(travelStyleTag[j].text.strip())
+                travelStyleTags.append(listTemp)
+            else:
+                travelStyleTags.append('')
+            if len(point) > 0:
+                points.append(int(str(point.text.strip()).replace(',','')))
+            else:
+                points.append('')
+            if level is not None:
+                levels.append(level.text[6:level.text.find(' ',6)].strip())
+            else:
+                levels.append('')
 
 
 # In[14]:
@@ -249,6 +251,7 @@ df2.columns = ['Age Gender','Hometown','Travel Style','Point','Level']
 
 # In[16]:
 
+df2
 print(df2)
 
 
@@ -275,8 +278,8 @@ for i in range(num):
 
 print("number of documents inserted :", collection.count())
 
-for x in collection.find():
-    print(x['Name'])
+#for x in collection.find():
+#    print(x['Name'])
 
 client.close()
 
