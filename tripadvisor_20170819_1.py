@@ -20,6 +20,7 @@ hotel_listing = []
 hotel_page_url = []
 hotel_name = []
 hotel_url = []
+hotel_counter = 0
 
 names = []
 ratings = []
@@ -42,13 +43,22 @@ def main():
     initialise_database()
     get_hotel_url()
     
+    global hotel_counter
+    
     print(len(hotel_name))
     print(len(hotel_name_list))
+        
     if len(hotel_name) == len(hotel_name_list):
         print('Hotel list matched.')    
-        for i in hotel_url:
-        #    print(i)
-            get_hotel_review(i)
+#         for i in hotel_url:
+#         #    print(i)
+#             get_hotel_review(i)
+        while hotel_counter < len(hotel_name):
+            print(hotel_counter)
+            print(hotel_name[hotel_counter])
+            print(hotel_url[hotel_counter])
+            get_hotel_review(hotel_url[hotel_counter])
+            hotel_counter += 1
     else:
         print('Hotel list mismatched.')
 
@@ -358,28 +368,31 @@ def write_to_mongoDB(doc_name):
             print(i['url'])
                 
     if doc_name == "user_review":     
-
+        
+        print(hotel_counter)
+        print(hotel_name[hotel_counter].strip())
         for i in range(len(names)):
             document = {'name':names[i].strip(),
+                        'hotelName':hotel_name[hotel_counter].strip(),
                         'rating':ratings[i].strip(),
                         'date':dates[i].strip(),
                         'title':titles[i].strip(),
                         'body':bodies[i].strip(),
                         'recommendTitle':recommendTitles[i].strip(),
-                        'recommendAnswer':recommendAnswers[i].strip(),
+                        'ratingSummary':recommendAnswers[i].strip(),
                         'sentiment':'',
-                        'rating_summary':''
                         }
             collection.insert(document)  
         
         for i in collection.find():
             print(i['name'])
+            print(i['hotelName'])
             print(i['rating'])
             print(i['date'])
             print(i['title'])
             print(i['body'])
             print(i['recommendTitle'])
-            print(i['recommendAnswer'])
+            print(i['ratingSummary'])
             
     if doc_name == "member_profile":
         print(ageGenders)
