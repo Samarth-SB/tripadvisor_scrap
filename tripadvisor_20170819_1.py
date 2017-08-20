@@ -467,15 +467,22 @@ def write_to_mongoDB(doc_name):
         
         for i in range(len(ageGenders)):
             hotels = []
+            travelTypes = []
+            
             for hotelsResult in db.user_review.find({ 'name': usernames[i].strip()}):
                 hotels.append(hotelsResult['hotelName'])
+                if(hotelsResult['recommendTitle'] not in travelTypes):
+                    splitRecTitle = hotelsResult['recommendTitle'].split(',')
+                    if(len(splitRecTitle) == 2):
+                        travelTypes.append(splitRecTitle[1])
+            
             print('hotels : ' + str(hotels)[1:-1])
             document = {'username':usernames[i].strip(),
                         'age':ages[i].strip(),
                         'gender':genders[i].strip(),
                         'hometown':hometowns[i].strip(),
                         'travelStyleTag':travelStyleTags[i],
-                        'travelTypeTag':'',
+                        'travelTypeTag':travelTypes,
                         'point':points[i],
                         'level':levels[i].strip(),
                         'hotels':hotels
