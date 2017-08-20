@@ -14,8 +14,12 @@ from pymongo import MongoClient
 
 
 # Define Global Variables ###
-url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                 # Input Hong Kong Hotels URL
-hotel_name_list = ['JW Marriott Hotel Hong Kong', 'Conrad Hong Kong']#, 'The Upper House']    # Provide hotel name list
+url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
+hotel_name_list = ['JW Marriott Hotel Hong Kong', 'Conrad Hong Kong']#, 'The Upper House',
+#               'Hotel Madera Hollywood', 'Shama Central Serviced Apartment', 'Butterfly on Wellington',
+#                'Four Seasons Hotel Hong Kong', 'The Pottinger Hong Kong', 'Ovolo Central',
+#                'The Landmark Mandarin Oriental, Hong Kong', 'Mandarin Oriental, Hong Kong' ,
+#                'Mini Hotel Central Hong Kong', 'Mingle Place At The Eden']        # Provide hotel name list
 hotel_listing = []
 hotel_page_url = []
 hotel_name = []
@@ -44,9 +48,9 @@ def main():
     get_hotel_url()
     
     global hotel_counter
-    
-    print(len(hotel_name))
-    print(len(hotel_name_list))
+
+    print("No. of hotel in name list provided:", len(hotel_name_list))    
+    print("No. of hotel url found on TripAdvisor website:", len(hotel_name))
         
     if len(hotel_name) == len(hotel_name_list):
         print('Hotel list matched.')    
@@ -54,7 +58,7 @@ def main():
 #         #    print(i)
 #             get_hotel_review(i)
         while hotel_counter < len(hotel_name):
-            print(hotel_counter)
+            print('Hotel no.:', hotel_counter + 1)
             print(hotel_name[hotel_counter])
             print(hotel_url[hotel_counter])
             get_hotel_review(hotel_url[hotel_counter])
@@ -138,6 +142,15 @@ def get_hotel_review(url):
 # Read review ###    
     print('Reading reviews.')  
     temp = []
+    uids = []
+
+    global names
+    global ratings
+    global dates
+    global titles
+    global bodies
+    global recommendTitles
+    global recommendAnswers    
     names[:] = []
     ratings[:] = []
     dates[:] = []
@@ -145,7 +158,7 @@ def get_hotel_review(url):
     bodies[:] = []
     recommendTitles[:] = []
     recommendAnswers[:] = []
-    uids = []
+
     for i in range(len(userReviewURL)):
         html = requests.get(userReviewURL[i])
         soup = BS(html.content,'html.parser')
@@ -255,7 +268,12 @@ def get_member_profile(uids):
     
     
     # In[12]:
-    
+
+    global ageGenders
+    global hometowns
+    global travelStyleTags
+    global points
+    global levels   
     ageGenders[:] = []
     hometowns[:] = []
     travelStyleTags[:] = []
@@ -354,23 +372,26 @@ def write_to_mongoDB(doc_name):
     print(collection)
 
 # reset collection
-    collection.remove({})
+#    collection.remove({})
 
     if doc_name == "hotel_listing":
+        
         for i in range(len(hotel_name)):
             document = {'name':hotel_name[i].strip(),
                         'url':hotel_url[i].strip(),
                         'location':''}
             collection.insert(document)
-    
+            
+        print("Number of documents inserted:", len(hotel_name))
+        
         for i in collection.find():
             print(i['name'])
             print(i['url'])
                 
     if doc_name == "user_review":     
         
-        print(hotel_counter)
-        print(hotel_name[hotel_counter].strip())
+#        print(hotel_counter)
+        print('Writing User Reviews for: ' + hotel_name[hotel_counter].strip())
         for i in range(len(names)):
             document = {'name':names[i].strip(),
                         'hotelName':hotel_name[hotel_counter].strip(),
@@ -383,6 +404,8 @@ def write_to_mongoDB(doc_name):
                         'sentiment':'',
                         }
             collection.insert(document)  
+        
+        print("Number of documents inserted:", len(names))
         
         for i in collection.find():
             print(i['name'])
@@ -414,6 +437,8 @@ def write_to_mongoDB(doc_name):
                         }
             collection.insert(document)  
         
+        print("Number of documents inserted:", len(ageGenders))
+        
         for i in collection.find():
             print(i['ageGender'])
             print(i['hometown'])
@@ -421,7 +446,7 @@ def write_to_mongoDB(doc_name):
             print(i['point'])
             print(i['level'])
                     
-    print("Number of documents inserted:", collection.count())
+    print("Number of documents in collection after new documents inserted:", collection.count())
 
     client.close()
 
