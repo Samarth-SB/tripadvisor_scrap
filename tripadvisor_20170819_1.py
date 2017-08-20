@@ -15,15 +15,16 @@ from pymongo import MongoClient
 
 # Define Global Variables ###
 url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
-hotel_name_list = ['JW Marriott Hotel Hong Kong', 'Conrad Hong Kong']#, 'The Upper House',
-#               'Hotel Madera Hollywood', 'Shama Central Serviced Apartment', 'Butterfly on Wellington',
-#                'Four Seasons Hotel Hong Kong', 'The Pottinger Hong Kong', 'Ovolo Central',
-#                'The Landmark Mandarin Oriental, Hong Kong', 'Mandarin Oriental, Hong Kong' ,
-#                'Mini Hotel Central Hong Kong', 'Mingle Place At The Eden']        # Provide hotel name list
+hotel_name_list = ["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
+                   "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
+                   "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
+                   "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
+                   "Mini Hotel Central Hong Kong", "Mingle Place At The Eden"]        # Provide hotel name list
 hotel_listing = []
 hotel_page_url = []
 hotel_name = []
 hotel_url = []
+hotel_location = []
 hotel_counter = 0
 
 names = []
@@ -45,14 +46,21 @@ usernames = []
 # Define Functions ###
 
 def main():
-    initialise_database()
-    get_hotel_url()
-    
     global hotel_counter
+
+#    initialise_database()
+#    get_hotel_url()
+    read_hotel_listing()
+    
+#     i=0
+#     while i < len(hotel_name):
+#         print(hotel_name[i])
+#         print(hotel_url[i])
+#         print(hotel_location[i])
+#         i += 1     
 
     print("No. of hotel in name list provided:", len(hotel_name_list))    
     print("No. of hotel url found on TripAdvisor website:", len(hotel_name))
-        
     if len(hotel_name) == len(hotel_name_list):
         print('Hotel list matched.')    
 #         for i in hotel_url:
@@ -66,6 +74,7 @@ def main():
             hotel_counter += 1
     else:
         print('Hotel list mismatched.')
+
 
 def initialise_database():
 # db host
@@ -84,24 +93,48 @@ def initialise_database():
 
 
 def get_hotel_url():
-    html = requests.get(url)
-    soup = BS(html.content,'html.parser')
-
-    while True:
-        for l1 in soup.findAll('div', {'class':"listing_title"}):
-            for l2 in l1.findAll('a', {'class':"property_title"}):
-                if l2.text.strip(' \n\t\r') in hotel_name_list:
-                    if l2.text.strip(' \n\t\r') not in hotel_name:
-                        hotel_name.append(l2.text.strip(' \n\t\r'))
-                        hotel_url.append('https://www.tripadvisor.com.sg' + l2.get('href'))
+#     html = requests.get(url)
+#     soup = BS(html.content,'html.parser')
+    print(hotel_name_list)
     
-        page_link = soup.findAll(attrs={'class':"nav next taLnk ui_button primary"})
-        if len(page_link)==0:
-            break
-        else:
-            soup=BS(urllib.request.urlopen('https://www.tripadvisor.com.sg' + page_link[0].get('href')),'html.parser')
-       
+    for i1 in hotel_name_list:
+        found_flag = 0
+        attempt_cnt = 1
+        while found_flag == 0:
+            html = requests.get(url)
+            soup = BS(html.content,'html.parser')
+            print(i1)
+            while True:
+                for l1 in soup.findAll('div', {'class':"listing_title"}):
+                    for l2 in l1.findAll('a', {'class':"property_title"}):
+                        if l2.text.strip(' \n\t\r') == i1:
+#                            if l2.text.strip(' \n\t\r') not in hotel_name:
+                            found_flag = 1
+    #                       print(found_flag)
+                            hotel_name.append(l2.text.strip(' \n\t\r'))
+                            hotel_url.append('https://www.tripadvisor.com.sg' + l2.get('href'))
+                            print("Hotel url found for:", l2.text.strip(' \n\t\r'))
+                            print('https://www.tripadvisor.com.sg' + l2.get('href'))
+                page_link = soup.findAll(attrs={'class':"nav next taLnk ui_button primary"})
+                if found_flag == 1:
+                    break
+                if len(page_link)==0:
+                    break
+                else:
+                    soup=BS(urllib.request.urlopen('https://www.tripadvisor.com.sg' + page_link[0].get('href')),'html.parser')
+
+            if found_flag == 0:
+                attempt_cnt += 1
+                print("Hotel url for", i1, "not found. Executing attempt:", attempt_cnt)
+            
+
+            
     write_to_mongoDB("hotel_listing")
+
+
+
+def read_hotel_listing():
+    read_from_mongoDB("hotel_listing")
 
 
 
@@ -362,6 +395,36 @@ def get_member_profile(uids):
 #     print(df2)
     
     
+def read_from_mongoDB(doc_name):  
+    
+# db host
+    client = MongoClient("localhost", 27017)
+#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
+
+# db name
+    db = client.tripadvisor
+    
+# collection name
+    print('Collection name: ' + doc_name)
+    collection = db[doc_name].find()
+#    print(collection)
+
+    if doc_name == "hotel_listing":
+        for i in collection:
+            hotel_name.append(i['name'])
+            hotel_url.append(i['url'])
+            hotel_location.append(i['location'])   
+#            print(i['name'])
+        print("Number of documents read:", len(hotel_name))
+        
+#         i=0
+#         while i < len(hotel_name):
+#             print(hotel_name[i])
+#             print(hotel_url[i])
+#             print(hotel_location[i])
+#             i += 1     
+
+        
     
 def write_to_mongoDB(doc_name):    
 
