@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 # Import Library ###
 import re
@@ -11,7 +12,8 @@ import json
 import numpy as np
 import pandas as pd
 from pymongo import MongoClient
-
+from Worker import Worker
+from ThreadPool import ThreadPool
 
 # Define Global Variables ###
 url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
@@ -113,9 +115,7 @@ def add_hotel_listing():
 
             
     write_to_mongoDB("hotel_listing")
-    
-    
-    
+        
 def add_review_record():
 
     global hotel_counter
@@ -123,17 +123,25 @@ def add_review_record():
     read_from_mongoDB("hotel_listing")
     print("No. of hotel in name list provided:", len(hotel_name_list))    
     print("No. of hotel url found on TripAdvisor website:", len(hotel_name))
+    
     if len(hotel_name) == len(hotel_name_list):
         print('Hotel list matched.')    
 #         for i in hotel_url:
 #         #    print(i)
 #             get_hotel_review(i)
+        pool = ThreadPool(15)
         while hotel_counter < len(hotel_name):
             print('Hotel no.:', hotel_counter + 1)
             print(hotel_name[hotel_counter])
             print(hotel_url[hotel_counter])
-            get_hotel_review(hotel_url[hotel_counter])
-            hotel_counter += 1
+            try:
+                param1 = [hotel_url[hotel_counter]]
+                pool.map(get_hotel_review, param1)
+                pool.wait_completion()
+                #get_hotel_review(hotel_url[hotel_counter])
+                hotel_counter += 1
+            except:
+                print("Error: unable to queue for get_hotel_review")
     else:
         print('Hotel list mismatched.')
 
@@ -477,6 +485,8 @@ def write_to_mongoDB(doc_name):
                         travelTypes.append(splitRecTitle[1])
             
             print('hotels : ' + str(hotels)[1:-1])
+            #document = db.member_profile.find({ 'name': usernames[i].strip()})
+            #if(document is None):
             document = {'username':usernames[i].strip(),
                         'age':ages[i].strip(),
                         'gender':genders[i].strip(),
@@ -487,8 +497,16 @@ def write_to_mongoDB(doc_name):
                         'level':levels[i].strip(),
                         'hotels':hotels
                         }
-            
-            collection.insert(document)  
+
+            collection.insert(document)
+            #else:
+            #    collection.update({'name':usernames[i].strip()},
+            #                      {
+            #                        'travelTypeTag':travelTypes,
+            #                        'hotels':hotels   
+            #                      }
+            #                     )
+                
             #collection.update(
             #    { 'username' : usernames[i].strip() },
             #    { '$push': { 'hotels' : {'$each': hotels } } }
