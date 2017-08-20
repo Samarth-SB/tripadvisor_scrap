@@ -425,6 +425,19 @@ def write_to_mongoDB(doc_name):
 
     client.close()
 
+def updateMemberHotels(memberName):
+    client = MongoClient("localhost", 27017)
+    db = client.tripadvisor
+    result = db.user_review.find({ username: memberName})
+    db.member_profile.update(
+        { username : memberName },
+        {
+          username : memberName,
+          hotels : ""
+        }
+    )
+    client.close()
+
 
 # Execute ###
 main()
