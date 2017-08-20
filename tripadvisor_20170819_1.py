@@ -201,6 +201,8 @@ def get_hotel_review(url):
         for j in range(5):
             temp = container.findAll('div',{'id':re.compile('^review_')})[j]
             name = temp.find('span',{'class':re.compile('^expand_inline')})
+            if(name is None):
+                continue
             rating = temp.find('span',{'class':re.compile('^ui_bubble_rating')})['class'][1]
             date = temp.find('span',{'class':'ratingDate'}).next_element
                 
