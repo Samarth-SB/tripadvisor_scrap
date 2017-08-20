@@ -45,56 +45,37 @@ levels = []
 usernames = []
 
 
+
 # Define Functions ###
 
 def main():
-    global hotel_counter
-
-   # initialise_database()
-   # get_hotel_url()
-    read_hotel_listing()
     
-#     i=0
-#     while i < len(hotel_name):
-#         print(hotel_name[i])
-#         print(hotel_url[i])
-#         print(hotel_location[i])
-#         i += 1     
+# Option 1: Add hotel document to collection 
+# Option 2: Add reviews and member document to collection
+# Option 3: Delete all documents in hotel collection
+# Option 4: Delete all documents in user review collection
+# Option 5: Delete all documents in member collection
+# Option 6: Initialise database
 
-    print("No. of hotel in name list provided:", len(hotel_name_list))    
-    print("No. of hotel url found on TripAdvisor website:", len(hotel_name))
-    if len(hotel_name) == len(hotel_name_list):
-        print('Hotel list matched.')    
-#         for i in hotel_url:
-#         #    print(i)
-#             get_hotel_review(i)
-        while hotel_counter < len(hotel_name):
-            print('Hotel no.:', hotel_counter + 1)
-            print(hotel_name[hotel_counter])
-            print(hotel_url[hotel_counter])
-            get_hotel_review(hotel_url[hotel_counter])
-            hotel_counter += 1
-    else:
-        print('Hotel list mismatched.')
+# Provide option:    
+    option = 2
 
-
-def initialise_database():
-# db host
-    client = MongoClient("localhost", 27017)
-#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
-
-# db name
-    db = client.tripadvisor
-
-# reset collection
-    collection = db.collection_names(include_system_collections=False)
-    for collect in collection:
-        db[collect].drop()
-    
-    print('Collections dropped.')
+    if option == 1:        
+        add_hotel_listing()    
+    if option == 2:
+        add_review_record()
+    if option == 3:
+        delete_from_mongoDB("hotel_listing")        
+    if option == 4:
+        delete_from_mongoDB("user_review")
+    if option == 5:
+        delete_from_mongoDB("member_profile")   
+    if option == 6:
+        initialise_database()
 
 
-def get_hotel_url():
+
+def add_hotel_listing():
 #     html = requests.get(url)
 #     soup = BS(html.content,'html.parser')
     print(hotel_name_list)
@@ -132,11 +113,29 @@ def get_hotel_url():
 
             
     write_to_mongoDB("hotel_listing")
+    
+    
+    
+def add_review_record():
 
-
-
-def read_hotel_listing():
+    global hotel_counter
+        
     read_from_mongoDB("hotel_listing")
+    print("No. of hotel in name list provided:", len(hotel_name_list))    
+    print("No. of hotel url found on TripAdvisor website:", len(hotel_name))
+    if len(hotel_name) == len(hotel_name_list):
+        print('Hotel list matched.')    
+#         for i in hotel_url:
+#         #    print(i)
+#             get_hotel_review(i)
+        while hotel_counter < len(hotel_name):
+            print('Hotel no.:', hotel_counter + 1)
+            print(hotel_name[hotel_counter])
+            print(hotel_url[hotel_counter])
+            get_hotel_review(hotel_url[hotel_counter])
+            hotel_counter += 1
+    else:
+        print('Hotel list mismatched.')
 
 
 
@@ -164,7 +163,6 @@ def get_hotel_review(url):
 # To loop through all reviews pages
 #    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
     for i in range(2):                              # To use this line when running partial scrap for debug
-#        print('Load review URLs from web')
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
@@ -261,32 +259,11 @@ def get_hotel_review(url):
             else:
                 uids.append('')
     
-    # In[8]:
-    write_to_mongoDB("user_review")
-    
-#         namesDF = pd.DataFrame(np.array(names))
-#         ratingsDF = pd.DataFrame(np.array(ratings))
-#         datesDF = pd.DataFrame(np.array(dates))
-#         titlesDF = pd.DataFrame(np.array(titles))
-#         bodiesDF = pd.DataFrame(np.array(bodies))
-#         recommendTitlesDF = pd.DataFrame(np.array(recommendTitles))
-#         recommendAnswersDF = pd.DataFrame(np.array(recommendAnswers))
-        
-        
-        # In[9]:
-        
-#        df = pd.concat([namesDF,ratingsDF,datesDF,titlesDF,bodiesDF,recommendTitlesDF,recommendAnswersDF], axis=1)
-#        df.columns = ['Name','Rating','Date','Title','Body','Recommended Title','Recommended Answer']
-        
-        
-        # In[10]:
-        
-#        df
-#        print(df)
-    
+    write_to_mongoDB("user_review")   
     get_member_profile(uids)
     
-    # In[11]:
+
+
 # Read member profile ###
 def get_member_profile(uids):
     
@@ -302,9 +279,6 @@ def get_member_profile(uids):
         else:
             memberOverlayLink.append('')
             memberProfileURL.append('')
-    
-    
-    # In[12]:
 
     global ageGenders
     global hometowns
@@ -323,8 +297,6 @@ def get_member_profile(uids):
     usernames[:] = []
     ages[:] = []
     genders[:] = []
-    
-    # In[13]:
     
     for i in range(len(memberProfileURL)):
         if(memberProfileURL[i] is not None and len(memberProfileURL[i]) > 0):
@@ -374,41 +346,8 @@ def get_member_profile(uids):
                 else:
                     usernames.append('')
     
-    
-    # In[14]:
-#     if(ageGenders is not None):
-#         ageGendersDF = pd.DataFrame(np.array(ageGenders))
-#     else:
-#         ageGendersDF = ""
-#     if(hometowns is not None):
-#         hometownsDF = pd.DataFrame(np.array(hometowns))
-#     else:
-#         hometownsDF = ""
-#     if(travelStyleTags is not None):
-#         travelStyleTagsDF = pd.DataFrame(travelStyleTags)
-#     else:
-#         travelStyleTagsDF = ""
-#     if(points is not None):
-#         pointsDF = pd.DataFrame(np.array(points))
-#     else:
-#         pointsDF = ""
-#     if(levels is not None):
-#         levelsDF = pd.DataFrame(np.array(levels))
-#     else:
-#         levelsDF = ""
-    
-    
-    # In[15]:
     write_to_mongoDB("member_profile")
     
-#     df2 = pd.concat([ageGendersDF,hometownsDF,travelStyleTagsDF,pointsDF,levelsDF], axis=1)
-#     df2.columns = ['Age Gender','Hometown','Travel Style','Point','Level']
-#     
-#     
-#     # In[16]:
-#     
-#     df2
-#     print(df2)
     
     
 def read_from_mongoDB(doc_name):  
@@ -439,6 +378,23 @@ def read_from_mongoDB(doc_name):
 #             print(hotel_url[i])
 #             print(hotel_location[i])
 #             i += 1     
+
+
+
+def initialise_database():
+# db host
+    client = MongoClient("localhost", 27017)
+#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
+
+# db name
+    db = client.tripadvisor
+
+# reset collection
+    collection = db.collection_names(include_system_collections=False)
+    for collect in collection:
+        db[collect].drop()
+    
+    print('All collections dropped from database.')
 
         
     
@@ -543,8 +499,40 @@ def write_to_mongoDB(doc_name):
             print(i['hotels'])
                     
     print("Number of documents in collection after new documents inserted:", collection.count())
-
     client.close()
+
+
+
+def delete_from_mongoDB(doc_name):
+
+# db host
+    client = MongoClient("localhost", 27017)
+#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
+
+# db name
+    db = client.tripadvisor
+
+# collection name
+    print('Collection name: ' + doc_name)
+    collection = db[doc_name]
+    print(collection)
+
+# reset collection
+#    collection.remove({})
+
+    if doc_name == "hotel_listing":
+        collection.remove({})
+        
+    if doc_name == "user_review":  
+        collection.remove({})
+        
+    if doc_name == "member_profile":
+        collection.remove({})
+                 
+    print("All documents deleted from collection:", doc_name)
+    client.close()
+
+
 
 # Execute ###
 main()
