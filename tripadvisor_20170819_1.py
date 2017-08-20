@@ -39,6 +39,7 @@ hometowns = []
 travelStyleTags = []
 points = []
 levels = []
+usernames = []
 
 
 # Define Functions ###
@@ -65,7 +66,6 @@ def main():
             hotel_counter += 1
     else:
         print('Hotel list mismatched.')
-
 
 def initialise_database():
 # db host
@@ -273,13 +273,14 @@ def get_member_profile(uids):
     global hometowns
     global travelStyleTags
     global points
-    global levels   
+    global levels
+    global usernames
     ageGenders[:] = []
     hometowns[:] = []
     travelStyleTags[:] = []
     points[:] = []
     levels[:] = []
-
+    usernames[:] = []
     
     # In[13]:
     
@@ -294,7 +295,8 @@ def get_member_profile(uids):
                 travelStyleTag = container.findAll('div',{'class':'tagBubble unclickable'})
                 point = container.find('div',{'class':'points'})
                 level = container.find('div',{'class':'level tripcollectiveinfo'})
-    
+                username = container.find('span',{'class':'nameText'})
+                
                 if len(ageGender) > 0:
                     ageGenders.append(ageGender.text[14:].strip())
                 else:
@@ -318,6 +320,10 @@ def get_member_profile(uids):
                     levels.append(level.text[6:level.text.find(' ',6)].strip())
                 else:
                     levels.append('')
+                if len(username) > 0:
+                    usernames.append(username.text)
+                else:
+                    usernames.append('')
     
     
     # In[14]:
@@ -425,7 +431,11 @@ def write_to_mongoDB(doc_name):
         print(levels)
         
         for i in range(len(ageGenders)):
-            document = {'username':'',
+            hotels = []
+            for hotelsResult in db.user_review.find({ 'name': usernames[i].strip()}):
+                hotels.append(hotelsResult['hotelName'])
+            print('hotels : ' + str(hotels)[1:-1])
+            document = {'username':usernames[i].strip(),
                         'city':'',
                         'country':'',
                         'ageGender':ageGenders[i].strip(),
@@ -434,8 +444,14 @@ def write_to_mongoDB(doc_name):
                         'travelTypeTag':'',
                         'point':points[i],
                         'level':levels[i].strip(),
+                        'hotels':hotels
                         }
+            
             collection.insert(document)  
+            #collection.update(
+            #    { 'username' : usernames[i].strip() },
+            #    { '$push': { 'hotels' : {'$each': hotels } } }
+            #)
         
         print("Number of documents inserted:", len(ageGenders))
         
@@ -445,24 +461,11 @@ def write_to_mongoDB(doc_name):
             print(i['travelStyleTag'])
             print(i['point'])
             print(i['level'])
+            print(i['hotels'])
                     
     print("Number of documents in collection after new documents inserted:", collection.count())
 
     client.close()
-
-def updateMemberHotels(memberName):
-    client = MongoClient("localhost", 27017)
-    db = client.tripadvisor
-    result = db.user_review.find({ username: memberName})
-    db.member_profile.update(
-        { username : memberName },
-        {
-          username : memberName,
-          hotels : ""
-        }
-    )
-    client.close()
-
 
 # Execute ###
 main()
