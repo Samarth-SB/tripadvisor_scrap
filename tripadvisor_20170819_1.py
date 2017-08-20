@@ -36,6 +36,8 @@ recommendTitles = []
 recommendAnswers = []
 
 ageGenders = []
+ages = []
+genders = []
 hometowns = []
 travelStyleTags = []
 points = []
@@ -48,8 +50,8 @@ usernames = []
 def main():
     global hotel_counter
 
-#    initialise_database()
-#    get_hotel_url()
+   # initialise_database()
+   # get_hotel_url()
     read_hotel_listing()
     
 #     i=0
@@ -310,12 +312,17 @@ def get_member_profile(uids):
     global points
     global levels
     global usernames
+    global ages
+    global genders
+    
     ageGenders[:] = []
     hometowns[:] = []
     travelStyleTags[:] = []
     points[:] = []
     levels[:] = []
     usernames[:] = []
+    ages[:] = []
+    genders[:] = []
     
     # In[13]:
     
@@ -334,6 +341,13 @@ def get_member_profile(uids):
                 
                 if len(ageGender) > 0:
                     ageGenders.append(ageGender.text[14:].strip())
+                    splitAgeGenders = ageGender.text[14:].strip().split('old')
+                    if(len(splitAgeGenders)==1):
+                        ages.append(splitAgeGenders[0])
+                        genders.append('')
+                    elif(len(splitAgeGenders)==2):
+                        ages.append(splitAgeGenders[0])
+                        genders.append(splitAgeGenders[1])
                 else:
                     ageGenders.append('')
                 if len(hometown) > 0:
@@ -501,9 +515,8 @@ def write_to_mongoDB(doc_name):
                 hotels.append(hotelsResult['hotelName'])
             print('hotels : ' + str(hotels)[1:-1])
             document = {'username':usernames[i].strip(),
-                        'city':'',
-                        'country':'',
-                        'ageGender':ageGenders[i].strip(),
+                        'age':ages[i].strip(),
+                        'gender':genders[i].strip(),
                         'hometown':hometowns[i].strip(),
                         'travelStyleTag':travelStyleTags[i],
                         'travelTypeTag':'',
@@ -521,7 +534,8 @@ def write_to_mongoDB(doc_name):
         print("Number of documents inserted:", len(ageGenders))
         
         for i in collection.find():
-            print(i['ageGender'])
+            print(i['age'])
+            print(i['gender'])
             print(i['hometown'])
             print(i['travelStyleTag'])
             print(i['point'])
