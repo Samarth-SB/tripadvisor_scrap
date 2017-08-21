@@ -17,10 +17,10 @@ from ThreadPool import ThreadPool
 
 # Define Global Variables ###
 url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
-hotel_name_list = [#["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
-   #                "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
-   #                "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
-   #                "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
+hotel_name_list = ["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
+                   "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
+                   "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
+                   "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
                    "Mini Hotel Central Hong Kong"]        # Provide hotel name list
 hotel_listing = []
 hotel_page_url = []
@@ -60,7 +60,7 @@ def main():
 # Option 6: Initialise database
 
 # Provide option:    
-    option = 2
+    option = 1
 
     if option == 1:        
         add_hotel_listing()    
@@ -169,8 +169,8 @@ def get_hotel_review(url):
     userReviewURL.append(temp_url[0])
 
 # To loop through all reviews pages
-#    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-    for i in range(2):                              # To use this line when running partial scrap for debug
+    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
+#    for i in range(2):                              # To use this line when running partial scrap for debug
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
