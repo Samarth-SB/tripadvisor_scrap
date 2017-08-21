@@ -60,7 +60,7 @@ def main():
 # Option 6: Initialise database
 
 # Provide option:    
-    option = 1
+    option = 2
 
     if option == 1:        
         add_hotel_listing()    
