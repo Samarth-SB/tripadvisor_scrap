@@ -17,10 +17,10 @@ from ThreadPool import ThreadPool
 
 # Define Global Variables ###
 url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
-hotel_name_list = ["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
-                   "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
-                   "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
-                   "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
+hotel_name_list = [#["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
+   #                "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
+   #                "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
+   #                "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
                    "Mini Hotel Central Hong Kong"]        # Provide hotel name list
 hotel_listing = []
 hotel_page_url = []
@@ -46,7 +46,7 @@ points = []
 levels = []
 usernames = []
 
-REVIEW_THREADS = 15
+REVIEW_THREADS = 4
 
 # Define Functions ###
 
@@ -169,8 +169,8 @@ def get_hotel_review(url):
     userReviewURL.append(temp_url[0])
 
 # To loop through all reviews pages
-    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-#    for i in range(2):                              # To use this line when running partial scrap for debug
+#    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
+    for i in range(2):                              # To use this line when running partial scrap for debug
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
@@ -482,35 +482,41 @@ def write_to_mongoDB(doc_name):
                 if(hotelsResult['recommendTitle'] not in travelTypes):
                     splitRecTitle = hotelsResult['recommendTitle'].split(',')
                     if(len(splitRecTitle) == 2):
-                        travelTypes.append(splitRecTitle[1])
+                        travelTypes.append(splitRecTitle[1].strip())
             
             print('hotels : ' + str(hotels)[1:-1])
-            #document = db.member_profile.find({ 'name': usernames[i].strip()})
-            #if(document is None):
-            document = {'username':usernames[i].strip(),
-                        'age':ages[i].strip(),
-                        'gender':genders[i].strip(),
-                        'hometown':hometowns[i].strip(),
-                        'travelStyleTag':travelStyleTags[i],
-                        'travelTypeTag':travelTypes,
-                        'point':points[i],
-                        'level':levels[i].strip(),
-                        'hotels':hotels
-                        }
+            document = db.member_profile.find({ 'username': usernames[i].strip()})
+            
+            if(document.count() > 0):
+                if(hotels not in document['hotels']):
+                    print("updating hotels");
+                    collection.update({'username':usernames[i].strip()},
+                                      {
+                                        'hotels':hotels   
+                                      }
+                                     )
+                elif(travelTypes not in document['travelTypeTag']):
+                    print("updating travelTypeTag");
+                    collection.update({'username':usernames[i].strip()},
+                                      {
+                                        'travelTypeTag':travelTypes  
+                                      }
+                                     )
+            else:
+                print("inserting");
+                document = {'username':usernames[i].strip(),
+                            'age':ages[i].strip(),
+                            'gender':genders[i].strip(),
+                            'hometown':hometowns[i].strip(),
+                            'travelStyleTag':travelStyleTags[i],
+                            'travelTypeTag':travelTypes,
+                            'point':points[i],
+                            'level':levels[i].strip(),
+                            'hotels':hotels
+                            }
 
-            collection.insert(document)
-            #else:
-            #    collection.update({'name':usernames[i].strip()},
-            #                      {
-            #                        'travelTypeTag':travelTypes,
-            #                        'hotels':hotels   
-            #                      }
-            #                     )
-                
-            #collection.update(
-            #    { 'username' : usernames[i].strip() },
-            #    { '$push': { 'hotels' : {'$each': hotels } } }
-            #)
+                collection.insert(document)
+                            
         
         print("Number of documents inserted:", len(ageGenders))
         
