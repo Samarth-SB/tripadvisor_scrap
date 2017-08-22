@@ -12,17 +12,19 @@ import json
 import numpy as np
 import pandas as pd
 from pymongo import MongoClient
-from Worker import Worker
-from ThreadPool import ThreadPool
+import sys
+import os.path
+import csv
 
 # Define Global Variables ###
 url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
-hotel_name_list = ["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
-                   "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
-                   "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
-                   "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
-                   "Mini Hotel Central Hong Kong"]        # Provide hotel name list
+#hotel_name_list = ["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
+#                   "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
+#                   "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
+#                   "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
+#                   "Mini Hotel Central Hong Kong"]        # Provide hotel name list
 #hotel_name_list = ["JW Marriott Hotel Hong Kong","Mini Hotel Central Hong Kong"]
+hotel_name_list = []
 
 hotel_listing = []
 hotel_page_url = []
@@ -61,20 +63,43 @@ def main():
 # Option 5: Delete all documents in member collection
 # Option 6: Initialise database
 
-# Provide option:    
-    option = 2
+# Provide option:  
+    global hotel_name_list
+    
+    if len(sys.argv) > 3 or len(sys.argv) < 3:
+        print("Run : python tripadvisor_hotels.py <option> <hotel list csv> e.g. python tripadvisor_hotels.py 2 hotel_list.csv")
+        sys.exit()
 
-    if option == 1:        
+    option = sys.argv[1]
+    hotel_list_file = sys.argv[2]
+    print("option : " + option)
+    print("hotel_list_file : " + hotel_list_file)
+    if os.path.isfile(hotel_list_file):
+        with open(hotel_list_file,'rU') as f:
+            line = csv.reader(f)
+            i = 0
+            print('Load hotels from file')
+            for row in line:
+                print(str(i) + ':' + row[0])
+                hotel_name_list.append(row[0])
+                i = i + 1
+            print("total hotel list found : " + str(i)) 
+            f.close()
+    else:
+        print("Hotel list csv file not found. Program exit.")
+        sys.exit()
+
+    if option == "1":        
         add_hotel_listing()    
-    if option == 2:
+    if option == "2":
         add_review_record()
-    if option == 3:
+    if option == "3":
         delete_from_mongoDB("hotel_listing")        
-    if option == 4:
+    if option == "4":
         delete_from_mongoDB("user_review")
-    if option == 5:
+    if option == "5":
         delete_from_mongoDB("member_profile")   
-    if option == 6:
+    if option == "6":
         initialise_database()
 
 
@@ -126,26 +151,27 @@ def add_review_record():
     print("No. of hotel in name list provided:", len(hotel_name_list))    
     print("No. of hotel url found on TripAdvisor website:", len(hotel_name))
     
-    if len(hotel_name) == len(hotel_name_list):
-        print('Hotel list matched.')    
+    #if len(hotel_name) == len(hotel_name_list):
+    #    print('Hotel list matched.')    
 #         for i in hotel_url:
 #         #    print(i)
 #             get_hotel_review(i)
         #pool = ThreadPool(REVIEW_THREADS)
-        while hotel_counter < len(hotel_name):
-            print('Hotel no.:', hotel_counter + 1)
-            print(hotel_name[hotel_counter])
-            print(hotel_url[hotel_counter])
-            try:
+    while hotel_counter < len(hotel_name):
+        print('Hotel no.:', hotel_counter + 1)
+        print(hotel_name[hotel_counter])
+        print(hotel_url[hotel_counter])
+        try:
+            if(hotel_name[hotel_counter] in hotel_name_list):
                 #param1 = [hotel_url[hotel_counter]]
                 #pool.map(get_hotel_review, param1)
                 #pool.wait_completion()
                 get_hotel_review(hotel_url[hotel_counter])
                 hotel_counter += 1
-            except:
-                print("Error: unable to queue for get_hotel_review")
-    else:
-        print('Hotel list mismatched.')
+        except:
+            print("Error: unable to run get_hotel_review")
+    #else:
+    #    print('Hotel list mismatched.')
 
 
 
@@ -171,8 +197,8 @@ def get_hotel_review(url):
     userReviewURL.append(temp_url[0])
 
 # To loop through all reviews pages
-    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-    #for i in range(3):                              # To use this line when running partial scrap for debug
+    #for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
+    for i in range(3):                              # To use this line when running partial scrap for debug
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
@@ -565,8 +591,6 @@ def delete_from_mongoDB(doc_name):
                  
     print("All documents deleted from collection:", doc_name)
     client.close()
-
-
 
 # Execute ###
 main()
