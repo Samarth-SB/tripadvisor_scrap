@@ -22,6 +22,8 @@ hotel_name_list = ["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper
                    "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
                    "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
                    "Mini Hotel Central Hong Kong"]        # Provide hotel name list
+#hotel_name_list = ["JW Marriott Hotel Hong Kong","Mini Hotel Central Hong Kong"]
+
 hotel_listing = []
 hotel_page_url = []
 hotel_name = []
@@ -129,16 +131,16 @@ def add_review_record():
 #         for i in hotel_url:
 #         #    print(i)
 #             get_hotel_review(i)
-        pool = ThreadPool(REVIEW_THREADS)
+        #pool = ThreadPool(REVIEW_THREADS)
         while hotel_counter < len(hotel_name):
             print('Hotel no.:', hotel_counter + 1)
             print(hotel_name[hotel_counter])
             print(hotel_url[hotel_counter])
             try:
-                param1 = [hotel_url[hotel_counter]]
-                pool.map(get_hotel_review, param1)
-                pool.wait_completion()
-                #get_hotel_review(hotel_url[hotel_counter])
+                #param1 = [hotel_url[hotel_counter]]
+                #pool.map(get_hotel_review, param1)
+                #pool.wait_completion()
+                get_hotel_review(hotel_url[hotel_counter])
                 hotel_counter += 1
             except:
                 print("Error: unable to queue for get_hotel_review")
@@ -170,7 +172,7 @@ def get_hotel_review(url):
 
 # To loop through all reviews pages
     for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-#    for i in range(2):                              # To use this line when running partial scrap for debug
+    #for i in range(3):                              # To use this line when running partial scrap for debug
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
@@ -478,24 +480,25 @@ def write_to_mongoDB(doc_name):
             travelTypes = []
             
             for hotelsResult in db.user_review.find({ 'name': usernames[i].strip()}):
-                hotels.append(hotelsResult['hotelName'])
+                if(hotelsResult['hotelName'] not in hotels):
+                    hotels.append(hotelsResult['hotelName'])
                 if(hotelsResult['recommendTitle'] not in travelTypes):
                     splitRecTitle = hotelsResult['recommendTitle'].split(',')
                     if(len(splitRecTitle) == 2):
                         travelTypes.append(splitRecTitle[1].strip())
             
             print('hotels : ' + str(hotels)[1:-1])
-            document = db.member_profile.find({ 'username': usernames[i].strip()})
+            document = db.member_profile.find_one({ 'username': usernames[i].strip()})
             
-            if(document.count() > 0):
-                if(hotels not in document['hotels']):
+            if(document is not None and document.count() > 0):
+                if(len(set(document['hotels'])-set(hotels)) > 0):
                     print("updating hotels");
                     collection.update({'username':usernames[i].strip()},
                                       {
                                         'hotels':hotels   
                                       }
                                      )
-                elif(travelTypes not in document['travelTypeTag']):
+                elif(len(set(document['travelTypeTag'])-set(travelTypes)) > 0):
                     print("updating travelTypeTag");
                     collection.update({'username':usernames[i].strip()},
                                       {
