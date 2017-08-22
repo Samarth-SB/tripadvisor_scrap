@@ -197,8 +197,8 @@ def get_hotel_review(url):
     userReviewURL.append(temp_url[0])
 
 # To loop through all reviews pages
-    #for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-    for i in range(2):                              # To use this line when running partial scrap for debug
+    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
+    #for i in range(2):                              # To use this line when running partial scrap for debug
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
@@ -346,7 +346,10 @@ def get_member_profile(uids):
                 point = container.find('div',{'class':'points'})
                 level = container.find('div',{'class':'level tripcollectiveinfo'})
                 username = container.find('span',{'class':'nameText'})
-                print("username: " + username.text)
+                try:
+                    print("username: " + username.text)
+                except:
+                    print("unable to show username due to unicode text")                    
                 if len(ageGender) > 0:
                     ageGenders.append(ageGender.text[14:].strip())
                     splitAgeGenders = ageGender.text[14:].strip().split('old')
@@ -516,7 +519,7 @@ def write_to_mongoDB(doc_name):
             print('hotels : ' + str(hotels)[1:-1])
             document = db.member_profile.find_one({ 'username': usernames[i].strip()})
             
-            if(document is not None and document.count() > 0):
+            if(document is not None):
                 if(len(set(document['hotels'])-set(hotels)) > 0):
                     print("updating hotels");
                     collection.update({'username':usernames[i].strip()},
