@@ -336,6 +336,7 @@ def get_member_profile(uids):
     
     for i in range(len(memberProfileURL)):
         if(memberProfileURL[i] is not None and len(memberProfileURL[i]) > 0):
+            print('memberProfileURL[i] : '  + memberProfileURL[i])
             html = requests.get(memberProfileURL[i])
             soup = BS(html.content,'html.parser')
             container = soup.find('div',{'id':'MODULES_MEMBER_CENTER'})
@@ -384,7 +385,6 @@ def get_member_profile(uids):
                     usernames.append(username.text)
                 else:
                     usernames.append('')
-    
     write_to_mongoDB("member_profile")
     
     
