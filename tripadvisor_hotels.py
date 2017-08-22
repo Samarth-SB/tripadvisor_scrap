@@ -123,7 +123,7 @@ def add_hotel_listing():
 #                            if l2.text.strip(' \n\t\r') not in hotel_name:
                             found_flag = 1
     #                       print(found_flag)
-                            hotel_name.append(l2.text.strip(' \n\t\r'))
+                            hotel_name.append(l2.text.strip(' \n\t\r').replace(",",""))
                             hotel_url.append('https://www.tripadvisor.com.sg' + l2.get('href'))
                             print("Hotel url found for:", l2.text.strip(' \n\t\r'))
                             print('https://www.tripadvisor.com.sg' + l2.get('href'))
