@@ -346,7 +346,7 @@ def get_member_profile(uids):
                 point = container.find('div',{'class':'points'})
                 level = container.find('div',{'class':'level tripcollectiveinfo'})
                 username = container.find('span',{'class':'nameText'})
-                
+                print("username: " + username)
                 if len(ageGender) > 0:
                     ageGenders.append(ageGender.text[14:].strip())
                     splitAgeGenders = ageGender.text[14:].strip().split('old')
