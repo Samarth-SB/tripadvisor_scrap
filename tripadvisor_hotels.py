@@ -510,10 +510,10 @@ def write_to_mongoDB(doc_name):
             
             for hotelsResult in db.user_review.find({ 'name': usernames[i].strip()}):
                 if(hotelsResult['hotelName'] not in hotels):
-                    hotels.append(hotelsResult['hotelName'])
-                if(hotelsResult['recommendTitle'] not in travelTypes):
-                    splitRecTitle = hotelsResult['recommendTitle'].split(',')
-                    if(len(splitRecTitle) == 2):
+                    hotels.append(hotelsResult['hotelName'])                
+                splitRecTitle = hotelsResult['recommendTitle'].split(',')
+                if(len(splitRecTitle) == 2):
+                    if(splitRecTitle[1].strip() not in travelTypes):
                         travelTypes.append(splitRecTitle[1].strip())
             
             print('hotels : ' + str(hotels)[1:-1])
@@ -552,14 +552,14 @@ def write_to_mongoDB(doc_name):
         
         print("Number of documents inserted:", len(ageGenders))
         
-        for i in collection.find():
-            print(i['age'])
-            print(i['gender'])
-            print(i['hometown'])
-            print(i['travelStyleTag'])
-            print(i['point'])
-            print(i['level'])
-            print(i['hotels'])
+#        for i in collection.find():
+#            print(i['age'])
+#            print(i['gender'])
+#            print(i['hometown'])
+#            print(i['travelStyleTag'])
+#            print(i['point'])
+#            print(i['level'])
+#            print(i['hotels'])
                     
     print("Number of documents in collection after new documents inserted:", collection.count())
     client.close()
