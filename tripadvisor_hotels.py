@@ -161,15 +161,15 @@ def add_review_record():
         print('Hotel no.:', hotel_counter + 1)
         print(hotel_name[hotel_counter])
         print(hotel_url[hotel_counter])
-        try:
-            if(hotel_name[hotel_counter] in hotel_name_list):
+#        try:
+        if(hotel_name[hotel_counter] in hotel_name_list):
                 #param1 = [hotel_url[hotel_counter]]
                 #pool.map(get_hotel_review, param1)
                 #pool.wait_completion()
-                get_hotel_review(hotel_url[hotel_counter])
-            hotel_counter += 1
-        except:
-            print("Error: unable to run get_hotel_review")
+            get_hotel_review(hotel_url[hotel_counter])
+        hotel_counter += 1
+#        except:
+#            print("Error: unable to run get_hotel_review")
     #else:
     #    print('Hotel list mismatched.')
 
@@ -197,8 +197,8 @@ def get_hotel_review(url):
     userReviewURL.append(temp_url[0])
 
 # To loop through all reviews pages
-    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-    #for i in range(3):                              # To use this line when running partial scrap for debug
+    #for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
+    for i in range(2):                              # To use this line when running partial scrap for debug
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
@@ -346,7 +346,7 @@ def get_member_profile(uids):
                 point = container.find('div',{'class':'points'})
                 level = container.find('div',{'class':'level tripcollectiveinfo'})
                 username = container.find('span',{'class':'nameText'})
-                print("username: " + username)
+                print("username: " + username.text)
                 if len(ageGender) > 0:
                     ageGenders.append(ageGender.text[14:].strip())
                     splitAgeGenders = ageGender.text[14:].strip().split('old')
@@ -484,15 +484,15 @@ def write_to_mongoDB(doc_name):
         
         print("Number of documents inserted:", len(names))
         
-        for i in collection.find():
-            print(i['name'])
-            print(i['hotelName'])
-            print(i['rating'])
-            print(i['date'])
-            print(i['title'])
-            print(i['body'])
-            print(i['recommendTitle'])
-            print(i['ratingSummary'])
+        #for i in collection.find():
+        #    print(i['name'])
+        #    print(i['hotelName'])
+        #    print(i['rating'])
+        #    print(i['date'])
+        #    print(i['title'])
+        #    print(i['body'])
+        #    print(i['recommendTitle'])
+        #    print(i['ratingSummary'])
             
     if doc_name == "member_profile":
         print(ageGenders)
