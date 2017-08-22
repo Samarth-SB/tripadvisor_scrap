@@ -167,7 +167,7 @@ def add_review_record():
                 #pool.map(get_hotel_review, param1)
                 #pool.wait_completion()
                 get_hotel_review(hotel_url[hotel_counter])
-                hotel_counter += 1
+            hotel_counter += 1
         except:
             print("Error: unable to run get_hotel_review")
     #else:
@@ -197,8 +197,8 @@ def get_hotel_review(url):
     userReviewURL.append(temp_url[0])
 
 # To loop through all reviews pages
-    #for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-    for i in range(3):                              # To use this line when running partial scrap for debug
+    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
+    #for i in range(3):                              # To use this line when running partial scrap for debug
 #        print(i)
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
