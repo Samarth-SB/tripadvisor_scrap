@@ -641,7 +641,7 @@ def write_to_mongoDB(doc_name):
     if doc_name == "review_sentiments":
         collection = db["user_review"]
         
-        for i in range(len(names)):
+        for i in range(len(sentiments)):
         #for i in range(999):
             arrSentiments = sentiments[i].split("/")
             sentiment_score = arrSentiments[0]
