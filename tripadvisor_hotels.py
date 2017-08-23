@@ -32,6 +32,8 @@ hotel_name = []
 hotel_url = []
 hotel_location = []
 hotel_counter = 0
+hotel_long = []
+hotel_lat = []
 
 names = []
 ratings = []
@@ -58,48 +60,52 @@ def main():
     
 # Option 1: Add hotel document to collection 
 # Option 2: Add reviews and member document to collection
+# Option 3: Insert Hotel Coordinates
 # Option 3: Delete all documents in hotel collection
 # Option 4: Delete all documents in user review collection
 # Option 5: Delete all documents in member collection
 # Option 6: Initialise database
 
 # Provide option:  
-    global hotel_name_list
-    
-    if len(sys.argv) > 3 or len(sys.argv) < 3:
-        print("Run : python tripadvisor_hotels.py <option> <hotel list csv> e.g. python tripadvisor_hotels.py 2 hotel_list.csv")
-        sys.exit()
-
-    option = sys.argv[1]
-    hotel_list_file = sys.argv[2]
-    print("option : " + option)
-    print("hotel_list_file : " + hotel_list_file)
-    if os.path.isfile(hotel_list_file):
-        with open(hotel_list_file,'rU') as f:
-            line = csv.reader(f)
-            i = 0
-            print('Load hotels from file')
-            for row in line:
-                print(str(i) + ':' + row[0])
-                hotel_name_list.append(row[0])
-                i = i + 1
-            print("total hotel list found : " + str(i)) 
-            f.close()
-    else:
-        print("Hotel list csv file not found. Program exit.")
-        sys.exit()
-
+#     global hotel_name_list
+#     
+#     if len(sys.argv) > 3 or len(sys.argv) < 3:
+#         print("Run : python tripadvisor_hotels.py <option> <hotel list csv> e.g. python tripadvisor_hotels.py 2 hotel_list.csv")
+#         sys.exit()
+#  
+#     option = sys.argv[1]
+#     hotel_list_file = sys.argv[2]
+#     print("option : " + option)
+#     print("hotel_list_file : " + hotel_list_file)
+#     if os.path.isfile(hotel_list_file):
+#         with open(hotel_list_file,'rU') as f:
+#             line = csv.reader(f)
+#             i = 0
+#             print('Load hotels from file')
+#             for row in line:
+#                 print(str(i) + ':' + row[0])
+#                 hotel_name_list.append(row[0])
+#                 i = i + 1
+#             print("total hotel list found : " + str(i)) 
+#             f.close()
+#     else:
+#         print("Hotel list csv file not found. Program exit.")
+#         sys.exit()
+    option = '3'
+    print(option)
     if option == "1":        
         add_hotel_listing()    
     if option == "2":
         add_review_record()
     if option == "3":
-        delete_from_mongoDB("hotel_listing")        
+        insert_hotel_location()
     if option == "4":
-        delete_from_mongoDB("user_review")
+        delete_from_mongoDB("hotel_listing")        
     if option == "5":
-        delete_from_mongoDB("member_profile")   
+        delete_from_mongoDB("user_review")
     if option == "6":
+        delete_from_mongoDB("member_profile")   
+    if option == "7":
         initialise_database()
 
 
@@ -142,6 +148,37 @@ def add_hotel_listing():
 
             
     write_to_mongoDB("hotel_listing")
+
+
+
+def insert_hotel_location():
+
+    googleMapAPIKey = 'AIzaSyABVE1uKIYmNLYw_NFF81tIxMA7mvvpaCU'
+    read_from_mongoDB("hotel_listing")
+#    address = 'JW Marriott Hotel Hong Kong'
+    
+    for i in range(len(hotel_name)):
+        
+        url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + hotel_name[i].replace(' ','+') + '&key=' + googleMapAPIKey
+        
+        response = urllib.request.urlopen(url)
+        data = json.load(response)
+    
+        lat = data['results'][0]['geometry']['location']['lat']
+        long = data['results'][0]['geometry']['location']['lng']
+
+#         print(address, ' latitude: ', str(lat))
+#         print(address, ' longitude: ', str(lng))        
+        
+        hotel_long.append(long)
+        hotel_lat.append(lat)
+        print(hotel_name[i])
+#        print(hotel_url[i])
+        print(hotel_long[i], ',', hotel_lat[i])
+    
+    write_to_mongoDB("hotel_location")     
+
+
         
 def add_review_record():
 
@@ -404,6 +441,14 @@ def read_from_mongoDB(doc_name):
 #    print(collection)
 
     if doc_name == "hotel_listing":
+        
+        global hotel_name
+        global hotel_url
+        global hotel_location        
+        hotel_name[:] = []
+        hotel_url[:] = []
+        hotel_location[:] = []
+        
         for i in collection:
             hotel_name.append(i['name'])
             hotel_url.append(i['url'])
@@ -561,6 +606,27 @@ def write_to_mongoDB(doc_name):
 #            print(i['level'])
 #            print(i['hotels'])
                     
+    if doc_name == "hotel_location":
+
+        collection = db["hotel_listing"]
+        print(collection)
+        
+        for i in range(len(hotel_name)):
+            db.hotel_listing.update(
+                {'name': hotel_name[i]},
+                {
+                    "$set": {'location': {'type':"Point", 'coordinates':[hotel_long[i], hotel_lat[i]]}
+                           }
+                }
+            )
+         
+        print("Number of documents updated:", len(hotel_name))
+        
+        for i in collection.find():
+            print(i['name'])
+#            print(i['url'])
+            print(i['location']) 
+   
     print("Number of documents in collection after new documents inserted:", collection.count())
     client.close()
 
