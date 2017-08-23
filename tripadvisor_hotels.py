@@ -641,8 +641,8 @@ def write_to_mongoDB(doc_name):
     if doc_name == "review_sentiments":
         collection = db["user_review"]
         
-        #for i in range(len(names)):
-        for i in range(10):
+        for i in range(len(names)):
+        #for i in range(999):
             arrSentiments = sentiments[i].split("/")
             sentiment_score = arrSentiments[0]
             sentiment_mag = arrSentiments[1]
@@ -695,19 +695,23 @@ def insert_review_sentiments():
     client = language.LanguageServiceClient()
     global sentiments
     sentiments[:] = []
-    #for i in range(len(names)): 
-    for i in range(10): # limit due to google api quota
-        # The text to analyze        
-        document = types.Document(
-            content=bodies[i],
-            type=enums.Document.Type.PLAIN_TEXT)
-        print('Analysing sentiment : ' + bodies[i])
-        # Detects the sentiment of the text
-        sentiment = client.analyze_sentiment(document=document).document_sentiment
-        
-        print('Sentiment: {}, {}'.format(sentiment.score, sentiment.magnitude))
+    for i in range(len(names)): 
+    #for i in range(0,1000): # limit due to google api quota
+        try:
+            # The text to analyze        
+            document = types.Document(
+                content=bodies[i],
+                type=enums.Document.Type.PLAIN_TEXT)
+            print('Analysing sentiment : ' + bodies[i])
+            # Detects the sentiment of the text
+            sentiment = client.analyze_sentiment(document=document).document_sentiment
+            
+            print(str(i) + '.Sentiment: {}, {}'.format(sentiment.score, sentiment.magnitude))
 
-        sentiments.append(str(sentiment.score) + "/" + str(sentiment.magnitude))
+            sentiments.append(str(sentiment.score) + "/" + str(sentiment.magnitude))
+        except:
+            print("Error analysing text due to language support or other reasons, skipping...")
+            pass
     write_to_mongoDB("review_sentiments") 
 
 # Execute ###
