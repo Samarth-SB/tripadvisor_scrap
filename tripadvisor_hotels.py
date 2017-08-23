@@ -15,6 +15,10 @@ from pymongo import MongoClient
 import sys
 import os.path
 import csv
+# Imports the Google Cloud client library
+from google.cloud import language
+from google.cloud.language import enums
+from google.cloud.language import types
 
 # Define Global Variables ###
 url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
@@ -52,7 +56,8 @@ points = []
 levels = []
 usernames = []
 
-REVIEW_THREADS = 4
+sentiments = []
+#REVIEW_THREADS = 4
 
 # Define Functions ###
 
@@ -91,7 +96,7 @@ def main():
 #     else:
 #         print("Hotel list csv file not found. Program exit.")
 #         sys.exit()
-    option = '3'
+    option = '4'
     print(option)
     if option == "1":        
         add_hotel_listing()    
@@ -100,12 +105,14 @@ def main():
     if option == "3":
         insert_hotel_location()
     if option == "4":
-        delete_from_mongoDB("hotel_listing")        
+        insert_review_sentiments()
     if option == "5":
-        delete_from_mongoDB("user_review")
+        delete_from_mongoDB("hotel_listing")        
     if option == "6":
-        delete_from_mongoDB("member_profile")   
+        delete_from_mongoDB("user_review")
     if option == "7":
+        delete_from_mongoDB("member_profile")   
+    if option == "8":
         initialise_database()
 
 
@@ -453,17 +460,21 @@ def read_from_mongoDB(doc_name):
             hotel_name.append(i['name'])
             hotel_url.append(i['url'])
             hotel_location.append(i['location'])   
-#            print(i['name'])
+
         print("Number of documents read:", len(hotel_name))
         
-#         i=0
-#         while i < len(hotel_name):
-#             print(hotel_name[i])
-#             print(hotel_url[i])
-#             print(hotel_location[i])
-#             i += 1     
+    elif doc_name == "user_review":
+        global names
+        global bodies
+        names[:] = []
+        bodies[:] = []
 
+        for i in collection:
+            names.append(i['name'])
+            bodies.append(i['body'])
 
+        print("Number of user_reviews read: ", len(names))
+            
 
 def initialise_database():
 # db host
@@ -626,7 +637,24 @@ def write_to_mongoDB(doc_name):
             print(i['name'])
 #            print(i['url'])
             print(i['location']) 
-   
+
+    if doc_name == "review_sentiments":
+        collection = db["user_review"]
+        
+        #for i in range(len(names)):
+        for i in range(10):
+            arrSentiments = sentiments[i].split("/")
+            sentiment_score = arrSentiments[0]
+            sentiment_mag = arrSentiments[1]
+            db.user_review.update(
+                    {'name':names[i].strip()},
+                    {
+                        "$set": {'sentiment': {
+                            'score':sentiment_score,
+                            'magnitude':sentiment_mag
+                            }}
+                    })
+            
     print("Number of documents in collection after new documents inserted:", collection.count())
     client.close()
 
@@ -660,6 +688,27 @@ def delete_from_mongoDB(doc_name):
                  
     print("All documents deleted from collection:", doc_name)
     client.close()
+
+def insert_review_sentiments():    
+    read_from_mongoDB("user_review")
+    # Instantiates a client
+    client = language.LanguageServiceClient()
+    global sentiments
+    sentiments[:] = []
+    #for i in range(len(names)): 
+    for i in range(10): # limit due to google api quota
+        # The text to analyze        
+        document = types.Document(
+            content=bodies[i],
+            type=enums.Document.Type.PLAIN_TEXT)
+        print('Analysing sentiment : ' + bodies[i])
+        # Detects the sentiment of the text
+        sentiment = client.analyze_sentiment(document=document).document_sentiment
+        
+        print('Sentiment: {}, {}'.format(sentiment.score, sentiment.magnitude))
+
+        sentiments.append(str(sentiment.score) + "/" + str(sentiment.magnitude))
+    write_to_mongoDB("review_sentiments") 
 
 # Execute ###
 main()
