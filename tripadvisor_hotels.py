@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 # Import Library ###
 import re
 import requests
@@ -21,13 +20,7 @@ from google.cloud.language import enums
 from google.cloud.language import types
 
 # Define Global Variables ###
-url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html'                     # Input Hong Kong Hotels URL
-#hotel_name_list = ["JW Marriott Hotel Hong Kong", "Conrad Hong Kong", "The Upper House",
-#                   "Hotel Madera Hollywood", "Shama Central Serviced Apartment", "Butterfly on Wellington",
-#                   "Four Seasons Hotel Hong Kong", "The Pottinger Hong Kong", "Ovolo Central",
-#                   "The Landmark Mandarin Oriental, Hong Kong", "Mandarin Oriental, Hong Kong",
-#                   "Mini Hotel Central Hong Kong"]        # Provide hotel name list
-#hotel_name_list = ["JW Marriott Hotel Hong Kong","Mini Hotel Central Hong Kong"]
+url = 'https://www.tripadvisor.com.sg/Hotels-g294217-Hong_Kong-Hotels.html' # Input Hong Kong Hotels URL
 hotel_name_list = []
 
 hotel_listing = []
@@ -57,46 +50,44 @@ levels = []
 usernames = []
 
 sentiments = []
-#REVIEW_THREADS = 4
 
-# Define Functions ###
-
+# Main function ###
+# Run : python tripadvisor_hotels.py <option> <hotel list csv> e.g. python tripadvisor_hotels.py 2 hotel_list.csv
 def main():
     
-# Option 1: Add hotel document to collection 
-# Option 2: Add reviews and member document to collection
-# Option 3: Insert Hotel Coordinates
-# Option 3: Delete all documents in hotel collection
-# Option 4: Delete all documents in user review collection
-# Option 5: Delete all documents in member collection
-# Option 6: Initialise database
+    # Option 1: Add hotel document to collection 
+    # Option 2: Add reviews and member document to collection
+    # Option 3: Insert Hotel Coordinates
+    # Option 3: Delete all documents in hotel collection
+    # Option 4: Delete all documents in user review collection
+    # Option 5: Delete all documents in member collection
+    # Option 6: Initialise database
 
-# Provide option:  
-#     global hotel_name_list
-#     
-#     if len(sys.argv) > 3 or len(sys.argv) < 3:
-#         print("Run : python tripadvisor_hotels.py <option> <hotel list csv> e.g. python tripadvisor_hotels.py 2 hotel_list.csv")
-#         sys.exit()
-#  
-#     option = sys.argv[1]
-#     hotel_list_file = sys.argv[2]
-#     print("option : " + option)
-#     print("hotel_list_file : " + hotel_list_file)
-#     if os.path.isfile(hotel_list_file):
-#         with open(hotel_list_file,'rU') as f:
-#             line = csv.reader(f)
-#             i = 0
-#             print('Load hotels from file')
-#             for row in line:
-#                 print(str(i) + ':' + row[0])
-#                 hotel_name_list.append(row[0])
-#                 i = i + 1
-#             print("total hotel list found : " + str(i)) 
-#             f.close()
-#     else:
-#         print("Hotel list csv file not found. Program exit.")
-#         sys.exit()
-    option = '4'
+    # Provide option:  
+    global hotel_name_list
+     
+    if len(sys.argv) > 3 or len(sys.argv) < 3:
+        print("Run : python tripadvisor_hotels.py <option> <hotel list csv> e.g. python tripadvisor_hotels.py 2 hotel_list.csv")
+        sys.exit()
+  
+    option = sys.argv[1]
+    hotel_list_file = sys.argv[2]
+    print("option : " + option)
+    print("hotel_list_file : " + hotel_list_file)
+    if os.path.isfile(hotel_list_file):
+        with open(hotel_list_file,'rU') as f:
+            line = csv.reader(f)
+            i = 0
+            print('Load hotels from file')
+            for row in line:
+                print(str(i) + ':' + row[0])
+                hotel_name_list.append(row[0])
+                i = i + 1
+            print("total hotel list found : " + str(i)) 
+            f.close()
+    else:
+        print("Hotel list csv file not found. Program exit.")
+        sys.exit()
     print(option)
     if option == "1":        
         add_hotel_listing()    
@@ -115,11 +106,8 @@ def main():
     if option == "8":
         initialise_database()
 
-
-
+# This function will add hotel list to mongodb
 def add_hotel_listing():
-#     html = requests.get(url)
-#     soup = BS(html.content,'html.parser')
     print(hotel_name_list)
     
     for i1 in hotel_name_list:
@@ -133,9 +121,7 @@ def add_hotel_listing():
                 for l1 in soup.findAll('div', {'class':"listing_title"}):
                     for l2 in l1.findAll('a', {'class':"property_title"}):
                         if l2.text.strip(' \n\t\r') == i1:
-#                            if l2.text.strip(' \n\t\r') not in hotel_name:
                             found_flag = 1
-    #                       print(found_flag)
                             hotel_name.append(l2.text.strip(' \n\t\r').replace(",",""))
                             hotel_url.append('https://www.tripadvisor.com.sg' + l2.get('href'))
                             print("Hotel url found for:", l2.text.strip(' \n\t\r'))
@@ -151,18 +137,15 @@ def add_hotel_listing():
             if found_flag == 0:
                 attempt_cnt += 1
                 print("Hotel url for", i1, "not found. Executing attempt:", attempt_cnt)
-            
-
-            
+                        
     write_to_mongoDB("hotel_listing")
 
-
-
+# This function will insert hotel location coordinates from google maps
+# Hotel listing must already saved in mongodb before
 def insert_hotel_location():
 
     googleMapAPIKey = 'AIzaSyABVE1uKIYmNLYw_NFF81tIxMA7mvvpaCU'
     read_from_mongoDB("hotel_listing")
-#    address = 'JW Marriott Hotel Hong Kong'
     
     for i in range(len(hotel_name)):
         
@@ -174,19 +157,14 @@ def insert_hotel_location():
         lat = data['results'][0]['geometry']['location']['lat']
         long = data['results'][0]['geometry']['location']['lng']
 
-#         print(address, ' latitude: ', str(lat))
-#         print(address, ' longitude: ', str(lng))        
-        
         hotel_long.append(long)
         hotel_lat.append(lat)
         print(hotel_name[i])
-#        print(hotel_url[i])
         print(hotel_long[i], ',', hotel_lat[i])
     
     write_to_mongoDB("hotel_location")     
 
-
-        
+# This function will add member review records into mongodb from each hotel in hotel_listing collection
 def add_review_record():
 
     global hotel_counter
@@ -194,31 +172,16 @@ def add_review_record():
     read_from_mongoDB("hotel_listing")
     print("No. of hotel in name list provided:", len(hotel_name_list))    
     print("No. of hotel url found on TripAdvisor website:", len(hotel_name))
-    
-    #if len(hotel_name) == len(hotel_name_list):
-    #    print('Hotel list matched.')    
-#         for i in hotel_url:
-#         #    print(i)
-#             get_hotel_review(i)
-        #pool = ThreadPool(REVIEW_THREADS)
+        
     while hotel_counter < len(hotel_name):
         print('Hotel no.:', hotel_counter + 1)
         print(hotel_name[hotel_counter])
         print(hotel_url[hotel_counter])
-#        try:
         if(hotel_name[hotel_counter] in hotel_name_list):
-                #param1 = [hotel_url[hotel_counter]]
-                #pool.map(get_hotel_review, param1)
-                #pool.wait_completion()
             get_hotel_review(hotel_url[hotel_counter])
         hotel_counter += 1
-#        except:
-#            print("Error: unable to run get_hotel_review")
-    #else:
-    #    print('Hotel list mismatched.')
 
-
-
+# This function being called in add_review_record for each hotel loop
 def get_hotel_review(url):
 
     print('Get hotel review url.')    
@@ -232,7 +195,7 @@ def get_hotel_review(url):
             page_no.append(l2.get('data-page-number'))
     print('Review pages: ' + page_no[0])   
 
-# Get review link ###    
+    # Get review link ###    
     for l1 in soup.findAll('div', {'class':"quote"}):
         container = l1.find('a')
         temp_url.append('https://www.tripadvisor.com.sg' + container['href'])    
@@ -240,19 +203,17 @@ def get_hotel_review(url):
     userReviewURL = []
     userReviewURL.append(temp_url[0])
 
-# To loop through all reviews pages
-    for i in range(int(page_no[0])-1):            # To use this line when running full scrap (all pages of reviews)
-    #for i in range(2):                              # To use this line when running partial scrap for debug
-#        print(i)
+    # To loop through all reviews pages
+    for i in range(int(page_no[0])-1):          # To use this line when running full scrap (all pages of reviews)
+    #for i in range(2):                         # To use this line when running partial scrap for debug
         html = requests.get(userReviewURL[i])
         print(userReviewURL[i])
         soup = BS(html.content,'html.parser')
         container = soup.find('a',{'data-page-number':i+2})
-#        print(container)
         urlTemp = 'https://www.tripadvisor.com.sg' + container['href']
         userReviewURL.append(urlTemp)    
 
-# Read review ###    
+    # Read review ###    
     print('Reading reviews.')  
     temp = []
     uids = []
@@ -295,7 +256,7 @@ def get_hotel_review(url):
             recommendTitle = temp.find('span',{'class':'recommend-titleInline'})
             recommendAnswer = temp.findAll('li',{'class':'recommend-answer'})
             memberInfo = temp.find('div',{'class':'member_info'})
-#            print(memberInfo)
+
             memberOverlayLink = memberInfo.find('div',{'class':'memberOverlayLink'})
             if(memberOverlayLink is not None):
                 uid = memberOverlayLink['id']
@@ -342,7 +303,6 @@ def get_hotel_review(url):
     write_to_mongoDB("user_review")   
     get_member_profile(uids)
     
-
 
 # Read member profile ###
 def get_member_profile(uids):
@@ -431,21 +391,21 @@ def get_member_profile(uids):
                     usernames.append('')
     write_to_mongoDB("member_profile")
     
-    
-    
+
+# This is common function to read data from mongodb 
 def read_from_mongoDB(doc_name):  
     
-# db host
+    # db local host
     client = MongoClient("localhost", 27017)
-#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
+    # db cloud host
+    # client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
 
-# db name
+    # db name
     db = client.tripadvisor
     
-# collection name
+    # collection name
     print('Collection name: ' + doc_name)
     collection = db[doc_name].find()
-#    print(collection)
 
     if doc_name == "hotel_listing":
         
@@ -475,16 +435,16 @@ def read_from_mongoDB(doc_name):
 
         print("Number of user_reviews read: ", len(names))
             
-
+# This is helper function to drop all collections
 def initialise_database():
-# db host
+    # db host
     client = MongoClient("localhost", 27017)
-#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
+    #    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
 
-# db name
+    # db name
     db = client.tripadvisor
 
-# reset collection
+    # reset collection
     collection = db.collection_names(include_system_collections=False)
     for collect in collection:
         db[collect].drop()
@@ -492,23 +452,20 @@ def initialise_database():
     print('All collections dropped from database.')
 
         
-    
+# This is common function to write data to mongdb
 def write_to_mongoDB(doc_name):    
 
-# db host
+    # db host
     client = MongoClient("localhost", 27017)
-#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
+    #    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
 
-# db name
+    # db name
     db = client.tripadvisor
 
-# collection name
+    # collection name
     print('Collection name: ' + doc_name)
     collection = db[doc_name]
     print(collection)
-
-# reset collection
-#    collection.remove({})
 
     if doc_name == "hotel_listing":
         
@@ -526,7 +483,6 @@ def write_to_mongoDB(doc_name):
                 
     if doc_name == "user_review":     
         
-#        print(hotel_counter)
         print('Writing User Reviews for: ' + hotel_name[hotel_counter].strip())
         for i in range(len(names)):
             document = {'name':names[i].strip(),
@@ -541,17 +497,7 @@ def write_to_mongoDB(doc_name):
                         }
             collection.insert(document)  
         
-        print("Number of documents inserted:", len(names))
-        
-        #for i in collection.find():
-        #    print(i['name'])
-        #    print(i['hotelName'])
-        #    print(i['rating'])
-        #    print(i['date'])
-        #    print(i['title'])
-        #    print(i['body'])
-        #    print(i['recommendTitle'])
-        #    print(i['ratingSummary'])
+        print("Number of documents inserted:", len(names))            
             
     if doc_name == "member_profile":
         print(ageGenders)
@@ -607,15 +553,6 @@ def write_to_mongoDB(doc_name):
                             
         
         print("Number of documents inserted:", len(ageGenders))
-        
-#        for i in collection.find():
-#            print(i['age'])
-#            print(i['gender'])
-#            print(i['hometown'])
-#            print(i['travelStyleTag'])
-#            print(i['point'])
-#            print(i['level'])
-#            print(i['hotels'])
                     
     if doc_name == "hotel_location":
 
@@ -635,14 +572,12 @@ def write_to_mongoDB(doc_name):
         
         for i in collection.find():
             print(i['name'])
-#            print(i['url'])
             print(i['location']) 
 
     if doc_name == "review_sentiments":
         collection = db["user_review"]
         
-        for i in range(len(sentiments)):
-        #for i in range(999):
+        for i in range(len(sentiments)):        
             arrSentiments = sentiments[i].split("/")
             sentiment_score = arrSentiments[0]
             sentiment_mag = arrSentiments[1]
@@ -659,24 +594,21 @@ def write_to_mongoDB(doc_name):
     client.close()
 
 
-
+# Common function to remove collection data
 def delete_from_mongoDB(doc_name):
 
-# db host
+    # db host
     client = MongoClient("localhost", 27017)
-#    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
+    #    client = MongoClient("mongodb://ke5016:ke5016!@cluster0-shard-00-00-5ymmp.mongodb.net:27017,cluster0-shard-00-01-5ymmp.mongodb.net:27017,cluster0-shard-00-02-5ymmp.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
 
-# db name
+    # db name
     db = client.tripadvisor
 
-# collection name
+    # collection name
     print('Collection name: ' + doc_name)
     collection = db[doc_name]
     print(collection)
-
-# reset collection
-#    collection.remove({})
-
+    
     if doc_name == "hotel_listing":
         collection.remove({})
         
@@ -689,14 +621,14 @@ def delete_from_mongoDB(doc_name):
     print("All documents deleted from collection:", doc_name)
     client.close()
 
+# Function to insert sentiment score and magnitude using google natural language API
 def insert_review_sentiments():    
     read_from_mongoDB("user_review")
     # Instantiates a client
     client = language.LanguageServiceClient()
     global sentiments
     sentiments[:] = []
-    for i in range(len(names)): 
-    #for i in range(0,1000): # limit due to google api quota
+    for i in range(len(names)):     
         try:
             # The text to analyze        
             document = types.Document(
@@ -714,8 +646,5 @@ def insert_review_sentiments():
             pass
     write_to_mongoDB("review_sentiments") 
 
-# Execute ###
+# Call main function ###
 main()
-
-
-
